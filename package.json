@@ -1,0 +1,24 @@
+{
+  "name": "bamazon-node-mysql-app",
+  "version": "1.0.0",
+  "description": "CLI App using MySQL",
+  "main": "bamazonCustomer.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/juliafercello/bamazon-node-mysql-app.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/juliafercello/bamazon-node-mysql-app/issues"
+  },
+  "homepage": "https://github.com/juliafercello/bamazon-node-mysql-app#readme",
+  "dependencies": {
+    "columnify": "^1.5.4",
+    "inquirer": "^6.2.2",
+    "mysql": "^2.16.0"
+  }
+}
