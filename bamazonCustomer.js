@@ -2,6 +2,7 @@ var mysql = require("mysql");
 var inquirer = require("inquirer");
 var columnify = require('columnify')
 
+//DB Connection Info
 var connection = mysql.createConnection({
     host: "localhost",
     port: 3306,
@@ -10,6 +11,7 @@ var connection = mysql.createConnection({
     database: "bamazon_db"
 });
 
+//Connect to the database and call functions to welcome shopper and show products for sale
 connection.connect(function (err) {
     if (err) throw err;
     welcomeShopper();
@@ -18,9 +20,10 @@ connection.connect(function (err) {
 
 //Show a welcome message to the shopper 
 function welcomeShopper() {
-    console.log("---------------------------------------\n\nWelcome to Candyzon!!\n\n---------------------------------------")
-    console.log("\n\nPlease enjoy our great selection \n\n---------------------------------------")
+    console.log("---------------------------------------\n\n\tWelcome to Candyzon!!\n\n---------------------------------------")
+    console.log("\n\n   Please enjoy our great selection \n\n---------------------------------------")
 }
+
 //Show the user all the items available for sale
 function showProducts() {
     connection.query("SELECT item_id, product_name, price FROM products", function (err, results) {
@@ -30,6 +33,7 @@ function showProducts() {
     });
 }
 
+//Prompt user to make selection and process their request
 function makeSelection() {
     inquirer.prompt([
         {
@@ -40,7 +44,7 @@ function makeSelection() {
         {
             name: "quantity",
             type: "input",
-            message: "How much would you like?"
+            message: "How many units would you like to buy?"
         }])
         .then(function (answer) {
             var query = "SELECT * FROM products WHERE ?";
@@ -49,27 +53,56 @@ function makeSelection() {
 
                 //Make sure it is a valid selection
                 if (res.length === 0) {
-                    console.log("---------------------------------------\n\nOops, that item doesn't exist.  Please try again.\n\n---------------------------------------")
-                    showProducts();
+                    console.log("---------------------------------------\n\n   Oops, that item doesn't exist.\n\n---------------------------------------")
+                    continueShopping();
                 }
 
                 //Make sure the desired quantity exists and place the order
                 else if (parseInt(answer.quantity) <= res[0].stock_quantity) {
                     console.log("Sold")
-                    placeOrder();
+                    var product = answer.item;
+                    var purchaseQty = parseInt(answer.quantity);
+                    var stockQty = res[0].stock_quantity;
+                    var price = res[0].price;
+                    placeOrder(product, purchaseQty, stockQty, price);
                 }
 
                 //Show an error message and ask if they want to buy something else
                 else {
-                    console.log("We are so sorry but our stock is too low.");
-                    showProducts(); //TODO prompt if they want to proceed or be done
+                    console.log("Oops, we don't have that many units available.");
+                    continueShopping();
                 }
             });
         });
 }
 
-function placeOrder() {
-    console.log("order is being placed...")
-    connection.end();
-    //TODO decrease inventory and print out receipt and ask if they are done shopping
+function placeOrder(product, purchaseQty, stockQty, price) {
+    var newStockQty = stockQty - purchaseQty;
+    var orderTotal = price * purchaseQty;
+
+    var updateStock = "UPDATE products SET stock_quantity = " + newStockQty + " WHERE item_id = " + product;
+
+    connection.query(updateStock, function (err, res) {
+        if (err) throw err;
+
+        console.log("---------------------------------------\n\n\tThanks for your purchase!!\n\n---------------------------------------")
+        console.log("\n\n\tTotal Due: $" + orderTotal.toFixed(2) + "\n\n---------------------------------------")
+        continueShopping();
+    });
+}
+
+function continueShopping() {
+    inquirer.prompt({
+        name: "keepShopping",
+        type: "confirm",
+        message: "Would you like to continue shopping?"
+    })
+        .then(function (answer) {
+            if (answer.keepShopping) {
+                showProducts();
+            }
+            else {
+                connection.end();
+            }
+        });
 }
