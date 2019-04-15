@@ -26,9 +26,9 @@ function welcomeShopper() {
 
 //Show the user all the items available for sale
 function showProducts() {
-    connection.query("SELECT item_id, product_name, price FROM products", function (err, results) {
+    connection.query("SELECT item_id, product_name, format(price,2) as price FROM products", function (err, results) {
         if (err) throw err;
-        console.log(columnify(results));
+        console.log("\n"+ columnify(results) + "\n");
         makeSelection();
     });
 }
@@ -59,7 +59,6 @@ function makeSelection() {
 
                 //Make sure the desired quantity exists and place the order
                 else if (parseInt(answer.quantity) <= res[0].stock_quantity) {
-                    console.log("Sold")
                     var product = answer.item;
                     var purchaseQty = parseInt(answer.quantity);
                     var stockQty = res[0].stock_quantity;
@@ -69,7 +68,7 @@ function makeSelection() {
 
                 //Show an error message and ask if they want to buy something else
                 else {
-                    console.log("Oops, we don't have that many units available.");
+                    console.log("---------------------------------------\n\nOops, we don't have that many units available.\n\n---------------------------------------")
                     continueShopping();
                 }
             });

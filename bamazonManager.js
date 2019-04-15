@@ -18,12 +18,13 @@ connection.connect(function (err) {
     displayMgrMenu();
 });
 
-//Show a welcome message to the shopper 
+//Show a welcome message to the manager 
 function welcomeManager() {
     console.log("---------------------------------------\n\n\tCandyzon Manager\n\n---------------------------------------")
-    console.log("\n\nManage product selection and inventory\n\n---------------------------------------")
+    console.log("\n\nManage the product selection and inventory\n\n---------------------------------------")
 }
 
+//Allow user to indicate their action and bring them to the appropriate function
 function displayMgrMenu() {
     inquirer
         .prompt({
@@ -49,7 +50,7 @@ function displayMgrMenu() {
                     break;
 
                 case "Add to Inventory":
-                    addInventory();
+                    updateInventory();
                     break;
 
                 case "Add New Product":
@@ -65,27 +66,37 @@ function displayMgrMenu() {
 
 //Display all products
 function viewProducts() {
-    var query = "SELECT item_id, product_name, price, stock_quantity FROM products";
+    console.log("---------------------------------------\n\nHere are the products for sale: \n")
+    var query = "SELECT item_id, product_name, format(price,2) as price, stock_quantity FROM products";
     connection.query(query, function (err, results) {
         if (err) throw err;
-        console.log(columnify(results));
+        console.log(columnify(results) + "\n");
         displayMgrMenu();
     });
 }
 
 
-//TODO When no results show nice message
+//Show products with inventory less than 5.
 function viewLowInventory() {
-    var query = "SELECT item_id, product_name, price, stock_quantity FROM products WHERE stock_quantity < 5";
+    var query = "SELECT item_id, product_name, format(price,2) as price, stock_quantity FROM products WHERE stock_quantity < 5";
+
     connection.query(query, function (err, results) {
         if (err) throw err;
-        console.log(columnify(results));
+
+        if (results.length > 0) {
+            console.log("---------------------------------------\n\nThe following products have low inventory:\n")
+            console.log(columnify(results) + "\n");
+        }
+        else {
+            console.log("---------------------------------------\n\nThere are no products with low inventory.\n\n---------------------------------------")
+
+        }
         displayMgrMenu();
     });
 }
 
-//Increase stock quantity for selected product
-function addInventory() {
+//Update stock quantity for selected product
+function updateInventory() {
     var query = "SELECT * FROM products";
     connection.query(query, function (err, results) {
         if (err) throw err;
@@ -102,25 +113,97 @@ function addInventory() {
                         }
                         return items;
                     },
-                    message: "To add inventory, select the applicable product."
+                    message: "To update inventory, select the applicable product."
                 },
                 {
                     name: "newQuantity",
                     type: "input",
-                    message: "Please input the total available inventory.?"
+                    message: "Please input the total available inventory.",
+                    validate: function (value) {
+                        if (!isNaN(value)) {
+                            return true;
+                        }
+                        else {
+                        return "Oops, the inventory needs to be a number";
+                        }
+                    }
                 }
             ])
             .then(function (answer) {
-                // var product;
-                console.log(answer);
-                //         var updateStock = "UPDATE products SET stock_quantity = " + newStockQty + " WHERE item_id = " + product;
-                //         connection.query(updateStock, function (err, res) {
-                //             if (err) throw err;
-                //         }
-                //     });
-                // }
+                //get the item id for the selected product
+                var productInfo = answer.item.split(" ");
+                var itemId = parseInt(productInfo[0]);
+                var newStockQty = answer.newQuantity;
 
+                var updateStock = "UPDATE products SET stock_quantity = " + newStockQty + " WHERE item_id = " + itemId;
+                connection.query(updateStock, function (err, results) {
+                    if (err) throw err;
+                    console.log("---------------------------------------\n\nInventory successfully updated.\n\n---------------------------------------")
+                    displayMgrMenu();
+                });
             });
-    }); 
+    });
 }
 
+function addProduct() {
+    inquirer
+        .prompt([
+            {
+                name: "productName",
+                type: "input",
+                message: "What is the name of the new product?"
+            },
+            {
+                name: "department",
+                type: "rawlist",
+                message: "What is the department?",
+                choices: [
+                    "Candy",
+                    "Toys",
+                    "Clothing"
+                ]
+            },
+            {
+                name: "price",
+                type: "input",
+                message: "What is the price per unit?",
+                validate: function (value) {
+                    if (!isNaN(value)) {
+                        return true;
+                    }
+                    else {
+                        return "Oops, please provide a valid price.";
+                    }
+                }
+            },
+            {
+                name: "stock",
+                type: "input",
+                message: "How many units are available?",
+                validate: function (value) {
+                    if (!isNaN(value)) {
+                        return true;
+                    }
+                    else {
+                        return "Oops, the inventory needs to be a number";
+                    }
+                }
+            }
+        ])
+        .then(function (answer) {
+            var query = "INSERT INTO products SET ?"
+            connection.query(query,
+                {
+                    product_name: answer.productName,
+                    department_name: answer.department,
+                    price: answer.price,
+                    stock_quantity: answer.stock
+                },
+                function (err, results) {
+                    if (err) throw err;
+                    console.log("---------------------------------------\n\nProduct successfully created.\n\n---------------------------------------")
+                    displayMgrMenu();
+                }
+            );
+        });
+}
