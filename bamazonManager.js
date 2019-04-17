@@ -20,7 +20,7 @@ connection.connect(function (err) {
 
 //Show a welcome message to the manager 
 function welcomeManager() {
-    console.log("---------------------------------------\n\n\tCandyzon Manager\n\n---------------------------------------")
+    console.log("---------------------------------------\n\n\tToy-azon Manager\n\n---------------------------------------")
     console.log("\n\nManage the product selection and inventory\n\n---------------------------------------")
 }
 
@@ -160,7 +160,7 @@ function addProduct() {
                 choices: [
                     "Candy",
                     "Toys",
-                    "Clothing"
+                    "Games"
                 ]
             },
             {

@@ -20,7 +20,7 @@ connection.connect(function (err) {
 
 //Show a welcome message to the shopper 
 function welcomeShopper() {
-    console.log("---------------------------------------\n\n\tWelcome to Candyzon!!\n\n---------------------------------------")
+    console.log("---------------------------------------\n\n\tWelcome to Toy-azon!!\n\n---------------------------------------")
     console.log("\n\n   Please enjoy our great selection \n\n---------------------------------------")
 }
 
@@ -44,7 +44,15 @@ function makeSelection() {
         {
             name: "quantity",
             type: "input",
-            message: "How many units would you like to buy?"
+            message: "How many units would you like to buy?",
+            validate: function (value) {
+                if (!isNaN(value)) {
+                    return true;
+                }
+                else {
+                return "Oops, the desired units needs to be a number";
+                }
+            }
         }])
         .then(function (answer) {
             var query = "SELECT * FROM products WHERE ?";
